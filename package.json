@@ -5,8 +5,8 @@
   "scripts": {
     "start": "node src/app.js",
     "start:dev": "nodemon src/app.js",
-    "test": "jest --setupFiles dotenv/config",
-    "test:watch": "jest --watchAll --coverage --setupFiles dotenv/config",
+    "test": "jest --runInBand --setupFiles dotenv/config",
+    "test:watch": "jest --runInBand --watchAll --coverage --setupFiles dotenv/config",
     "migrate": "node-pg-migrate",
     "migrate:test": "node-pg-migrate --envPath .test.env",
     "lint": "eslint ./src"

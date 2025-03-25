@@ -21,6 +21,18 @@ const AuthenticationsTableTestHelper = {
 
         return result.rows;
     },
+
+    async loginUser(server, { username, password }) {
+        const response = await server.inject({
+            method: 'POST',
+            url: '/authentications',
+            payload: { username, password },
+        });
+
+        const { data } = JSON.parse(response.payload);
+        return data.accessToken;
+    },
+
     async cleanTable() {
         await pool.query('TRUNCATE TABLE authentications');
     },

@@ -216,5 +216,121 @@ describe('ThreadRepositoryPostgres', () => {
             await expect(threadRepositoryPostgres.verifyThreadCommentExists(commentId, threadId))
                 .rejects.toThrow(NotFoundError);
         });
+    });
+
+    describe('getThreadById function', () => {
+        it('should return thread correctly when found', async () => {
+            // Arrange
+            const threadId = "thread-riakgu";
+
+            const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool);
+
+            // Action
+            const thread = await threadRepositoryPostgres.getThreadById(threadId);
+
+            // Assert
+            expect(thread).toStrictEqual({
+                id: 'thread-riakgu',
+                title: 'Thread title',
+                body: 'Thread body',
+                date: new Date(thread.date).toISOString(),
+                username: 'riakgu',
+            });
+        });
+
+        it('should throw NotFoundError when thread is not found', async () => {
+            // Arrange
+            const threadId = 'thread-123';
+
+            const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool);
+
+            // Action & Assert
+            await expect(threadRepositoryPostgres.getThreadById(threadId))
+                .rejects.toThrow(NotFoundError);
+        });
+    });
+
+    describe('getCommentsByThreadId function', () => {
+        it('should return comments correctly when found', async () => {
+            // Arrange
+            const threadId = "thread-riakgu";
+
+            const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool);
+
+            // Action
+            const comments = await threadRepositoryPostgres.getCommentsByThreadId(threadId);
+
+            // Assert
+            expect(comments).toHaveLength(1);
+            expect(comments[0]).toStrictEqual({
+                id: 'comment-riakgu',
+                username: "riakgu",
+                date: new Date(comments[0].date).toISOString(),
+                content: 'Komentar',
+            });
+        });
+
+        it('should return deleted comments as "**komentar telah dihapus**"', async () => {
+            // Arrange
+            await ThreadCommentsTableTestHelper.addThreadComment({
+                id: 'comment-deleted',
+                threadId: 'thread-riakgu',
+                owner: 'user-riakgu',
+                content: 'Komentar',
+                isDeleted: true,
+            })
+
+            const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool);
+
+            // Action
+            const comments = await threadRepositoryPostgres.getCommentsByThreadId('thread-riakgu');
+
+            // Assert
+            expect(comments).toHaveLength(2);
+            expect(comments[1]).toStrictEqual({
+                id: 'comment-deleted',
+                username: 'riakgu',
+                date: new Date(comments[1].date).toISOString(),
+                content: '**komentar telah dihapus**',
+            });
+        });
+
+        it('should return comments correctly when is_deleted is false', async () => {
+            // Arrange
+            await ThreadCommentsTableTestHelper.addThreadComment({
+                id: 'comment-valid',
+                threadId: 'thread-riakgu',
+                owner: 'user-riakgu',
+                content: 'Komentar belum dihapus',
+                isDeleted: false,
+            });
+
+            const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool);
+
+            // Action
+            const comments = await threadRepositoryPostgres.getCommentsByThreadId('thread-riakgu');
+
+            // Assert
+            expect(comments).toHaveLength(2);
+            expect(comments[1]).toStrictEqual({
+                id: 'comment-valid',
+                username: 'riakgu',
+                date: new Date(comments[1].date).toISOString(),
+                content: 'Komentar belum dihapus',
+            });
+        });
+
+        it('should return empty array when no comments found', async () => {
+            // Arrange
+            const threadId = "thread-kosong";
+            const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool);
+
+            // Action
+            const comments = await threadRepositoryPostgres.getCommentsByThreadId(threadId);
+
+            // Assert
+            expect(comments).toHaveLength(0);
+            expect(comments).toStrictEqual([]);
+        });
     })
 })

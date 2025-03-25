@@ -84,6 +84,55 @@ class ThreadRepositoryPostgres extends ThreadRepository {
             throw new NotFoundError('komentar tidak ditemukan atau telah dihapus');
         }
     }
+
+    async getThreadById(threadId) {
+        const query = {
+            text: `
+                SELECT threads.id, threads.title, threads.body, threads.created_at AS date, users.username
+                FROM threads
+                JOIN users ON threads.owner = users.id
+                WHERE threads.id = $1
+            `,
+            values: [threadId],
+        };
+
+        const result = await this._pool.query(query);
+
+        if (!result.rowCount) {
+            throw new NotFoundError('thread tidak ditemukan');
+        }
+
+        return {
+            ...result.rows[0],
+            date: new Date(result.rows[0].date).toISOString(),
+        };
+    }
+
+    async getCommentsByThreadId(threadId) {
+        const query = {
+            text: `
+                SELECT thread_comments.id, users.username, thread_comments.created_at AS date, 
+                    CASE 
+                       WHEN thread_comments.is_deleted THEN '**komentar telah dihapus**' 
+                       ELSE thread_comments.content
+                    END AS content
+                FROM thread_comments
+                JOIN users ON thread_comments.owner = users.id
+                WHERE thread_comments.thread_id = $1
+                ORDER BY thread_comments.created_at ASC
+            `,
+            values: [threadId],
+        };
+
+        const result = await this._pool.query(query);
+
+        return result.rows.map((comment) => ({
+            id: comment.id,
+            username: comment.username,
+            date: new Date(comment.date).toISOString(),
+            content: comment.content,
+        }));
+    }
 }
 
 module.exports = ThreadRepositoryPostgres;

@@ -147,6 +147,41 @@ class ThreadRepositoryPostgres extends ThreadRepository {
 
         return result.rows[0];
     }
+
+    async deleteThreadCommentReply(replyId) {
+        const query = {
+            text: 'UPDATE thread_comment_replies SET is_deleted = TRUE WHERE id = $1',
+            values: [replyId],
+        };
+
+        await this._pool.query(query);
+    }
+
+    async verifyThreadCommentReplyOwner(replyId, userId) {
+        const query = {
+            text: 'SELECT id FROM thread_comment_replies WHERE id = $1 AND owner = $2',
+            values: [replyId, userId],
+        };
+
+        const result = await this._pool.query(query);
+
+        if (!result.rowCount) {
+            throw new AuthorizationError('anda tidak berhak mengakses resource ini');
+        }
+    }
+
+    async verifyThreadCommentReplyExists(replyId, commentId) {
+        const query = {
+            text: 'SELECT id FROM thread_comment_replies WHERE id = $1 AND comment_id = $2 AND is_deleted = FALSE',
+            values: [replyId, commentId],
+        };
+
+        const result = await this._pool.query(query);
+
+        if (!result.rowCount) {
+            throw new NotFoundError('balasan komentar tidak ditemukan atau telah dihapus');
+        }
+    }
 }
 
 module.exports = ThreadRepositoryPostgres;

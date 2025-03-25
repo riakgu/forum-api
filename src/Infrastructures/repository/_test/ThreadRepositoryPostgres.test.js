@@ -26,6 +26,13 @@ describe('ThreadRepositoryPostgres', () => {
             owner: 'user-riakgu',
             content: 'Komentar',
         })
+
+        await ThreadCommentRepliesTableTestHelper.addThreadCommentReply({
+            id: 'reply-riakgu',
+            commentId: 'comment-riakgu',
+            owner: 'user-riakgu',
+            content: 'Balasan',
+        })
     });
 
     afterEach(async () => {
@@ -376,5 +383,72 @@ describe('ThreadRepositoryPostgres', () => {
                 owner: 'user-riakgu',
             });
         })
+    });
+
+    describe('deleteThreadCommentReply function', () => {
+        it('should delete reply from database', async () => {
+            // Arrange
+            const replyId = "reply-riakgu";
+            const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool);
+
+            // Action
+            await threadRepositoryPostgres.deleteThreadCommentReply(replyId);
+
+            // Assert
+            const comments = await ThreadCommentRepliesTableTestHelper.findThreadCommentReplyById(replyId);
+            expect(comments).toHaveLength(0);
+        });
     })
+
+    describe('verifyThreadCommentReplyOwner function', () => {
+        it('should not throw error when user is the owner', async () => {
+            // Arrange
+            const replyId = "reply-riakgu";
+            const owner = "user-riakgu";
+
+            const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool);
+
+            // Action & Assert
+            await expect(threadRepositoryPostgres.verifyThreadCommentReplyOwner(replyId, owner ))
+                .resolves.not.toThrow(AuthorizationError);
+        });
+
+        it('should throw AuthorizationError when user not the owner', async () => {
+            // Arrange
+            const replyId = "reply-riakgu";
+            const userId = "user-123";
+
+            const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool);
+
+            // Action & Assert
+            await expect(threadRepositoryPostgres.verifyThreadCommentReplyOwner(replyId, userId ))
+                .rejects.toThrow(AuthorizationError);
+        });
+    })
+
+    describe('verifyThreadCommentReplyExists function', () => {
+        it("should not throw error when reply exists", async () => {
+            // Arrange
+            const commentId = "comment-riakgu";
+            const replyId = "reply-riakgu";
+
+            const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool);
+
+            // Action & Assert
+            await expect(threadRepositoryPostgres.verifyThreadCommentReplyExists(replyId, commentId))
+                .resolves.not.toThrow(NotFoundError);
+        })
+
+        it('should throw NotFoundError when reply does not exist', async () => {
+            // Arrange
+            const commentId = "comment-riakgu";
+            const replyId = "reply-123";
+
+            const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool);
+
+            // Action & Assert
+            await expect(threadRepositoryPostgres.verifyThreadCommentReplyExists(replyId, commentId))
+                .rejects.toThrow(NotFoundError);
+        });
+    });
 });

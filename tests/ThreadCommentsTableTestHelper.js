@@ -2,10 +2,10 @@
 const pool = require('../src/Infrastructures/database/postgres/pool');
 
 const ThreadCommentsTableTestHelper = {
-    async addThreadComment({id, threadId, owner, content}) {
+    async addThreadComment({id, threadId, owner, content, isDeleted = false}) {
         const query = {
-            text: 'INSERT INTO thread_comments (id, thread_id, owner, content) VALUES ($1, $2, $3, $4) RETURNING id, content, owner',
-            values: [id, threadId, owner, content],
+            text: 'INSERT INTO thread_comments (id, thread_id, owner, content, is_deleted) VALUES ($1, $2, $3, $4, $5) RETURNING id, content, owner',
+            values: [id, threadId, owner, content, isDeleted],
         };
 
         await pool.query(query);

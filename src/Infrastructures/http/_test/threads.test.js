@@ -6,9 +6,11 @@ const createServer = require('../createServer');
 const UsersTableTestHelper = require("../../../../tests/UsersTableTestHelper");
 const bcrypt = require("bcrypt");
 const AuthenticationsTableTestHelper = require('../../../../tests/AuthenticationsTableTestHelper');
+const ThreadCommentsTableTestHelper = require("../../../../tests/ThreadCommentsTableTestHelper");
 
 describe('/threads endpoint', () => {
     let accessToken;
+    let accessToken2;
 
     beforeEach(async () => {
         const server = await createServer(container);
@@ -20,14 +22,33 @@ describe('/threads endpoint', () => {
             fullname: 'riakgu',
         });
 
+        await UsersTableTestHelper.addUser({
+            id: 'user-riakgu2',
+            username: 'riakgu2',
+            password: await bcrypt.hash('rahasia', 10),
+            fullname: 'riakgu2',
+        });
+
         await ThreadsTableTestHelper.addThread('user-riakgu', {
             id: 'thread-riakgu',
             title: 'Thread title',
             body: 'Thread body',
         });
 
+        await ThreadCommentsTableTestHelper.addThreadComment({
+            id: 'comment-riakgu',
+            threadId: 'thread-riakgu',
+            owner: 'user-riakgu',
+            content: 'Komentar',
+        })
+
         accessToken = await AuthenticationsTableTestHelper.loginUser(server, {
             username: 'riakgu',
+            password: 'rahasia',
+        });
+
+        accessToken2 = await AuthenticationsTableTestHelper.loginUser(server, {
+            username: 'riakgu2',
             password: 'rahasia',
         });
     });
@@ -221,6 +242,95 @@ describe('/threads endpoint', () => {
             expect(response.statusCode).toEqual(400);
             expect(responseJson.status).toEqual('fail');
             expect(responseJson.message).toEqual('content tidak boleh kosong');
+        });
+    });
+
+    describe('when DELETE /threads/{threadId}/comments/{commentId}', () => {
+        it('should response 200 if refresh token valid', async () => {
+            // Arrange
+            const server = await createServer(container);
+            const threadId = 'thread-riakgu';
+            const commentId = 'comment-riakgu';
+
+            // Action
+            const response = await server.inject({
+                method: 'DELETE',
+                url: `/threads/${threadId}/comments/${commentId}`,
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            });
+
+            // Assert
+            const responseJson = JSON.parse(response.payload);
+            expect(response.statusCode).toEqual(200);
+            expect(responseJson.status).toEqual('success');
+        });
+
+        it('should response 403 user not the owner', async () => {
+            // Arrange
+            const server = await createServer(container);
+            const threadId = 'thread-riakgu';
+            const commentId = 'comment-riakgu';
+
+            // Action
+            const response = await server.inject({
+                method: 'DELETE',
+                url: `/threads/${threadId}/comments/${commentId}`,
+                headers: {
+                    Authorization: `Bearer ${accessToken2}`,
+                },
+            });
+
+            // Assert
+            const responseJson = JSON.parse(response.payload);
+            expect(response.statusCode).toEqual(403);
+            expect(responseJson.status).toEqual('fail');
+            expect(responseJson.message).toEqual('anda tidak berhak mengakses resource ini');
+        });
+
+        it('should response 404 if thread not registered in database', async () => {
+            // Arrange
+            const server = await createServer(container);
+            const threadId = 'thread-123';
+            const commentId = 'comment-riakgu';
+
+            // Action
+            const response = await server.inject({
+                method: 'DELETE',
+                url: `/threads/${threadId}/comments/${commentId}`,
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            });
+
+            // Assert
+            const responseJson = JSON.parse(response.payload);
+            expect(response.statusCode).toEqual(404);
+            expect(responseJson.status).toEqual('fail');
+            expect(responseJson.message).toEqual('thread tidak ditemukan');
+        });
+
+        it('should response 404 if comment not registered in database', async () => {
+            // Arrange
+            const server = await createServer(container);
+            const threadId = 'thread-riakgu';
+            const commentId = 'comment-123';
+
+            // Action
+            const response = await server.inject({
+                method: 'DELETE',
+                url: `/threads/${threadId}/comments/${commentId}`,
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            });
+
+            // Assert
+            const responseJson = JSON.parse(response.payload);
+            expect(response.statusCode).toEqual(404);
+            expect(responseJson.status).toEqual('fail');
+            expect(responseJson.message).toEqual('komentar tidak ditemukan atau telah dihapus');
         });
     })
 });

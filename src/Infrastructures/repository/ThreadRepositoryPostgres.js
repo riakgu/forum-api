@@ -133,6 +133,20 @@ class ThreadRepositoryPostgres extends ThreadRepository {
             content: comment.content,
         }));
     }
+
+    async addThreadCommentReply(commentId, owner, newReply) {
+        const {content} = newReply;
+        const id = `reply-${this._idGenerator()}`;
+
+        const query = {
+            text: 'INSERT INTO thread_comment_replies (id, comment_id, owner, content) VALUES ($1, $2, $3, $4) RETURNING id, content, owner',
+            values: [id, commentId, owner, content],
+        };
+
+        const result = await this._pool.query(query);
+
+        return result.rows[0];
+    }
 }
 
 module.exports = ThreadRepositoryPostgres;

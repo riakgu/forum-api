@@ -7,6 +7,7 @@ const NotFoundError = require("../../../Commons/exceptions/NotFoundError");
 const NewThreadComment = require("../../../Domains/threads/entities/NewThreadComment");
 const ThreadCommentsTableTestHelper = require("../../../../tests/ThreadCommentsTableTestHelper");
 const AuthorizationError = require("../../../Commons/exceptions/AuthorizationError");
+const ThreadCommentRepliesTableTestHelper = require("../../../../tests/ThreadCommentRepliesTableTestHelper");
 
 describe('ThreadRepositoryPostgres', () => {
     beforeEach(async () => {
@@ -332,5 +333,48 @@ describe('ThreadRepositoryPostgres', () => {
             expect(comments).toHaveLength(0);
             expect(comments).toStrictEqual([]);
         });
+    });
+
+    describe('addThreadCommentReply function', () => {
+        it('should add a new thread comment reply to the database', async () => {
+            // Arrange
+            const newReply = new NewThreadComment({
+                content: 'Komentar',
+            });
+            const commentId = "comment-riakgu";
+            const owner = "user-riakgu";
+
+            const fakeIdGenerator = () => '123'; // stub!
+            const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, fakeIdGenerator);
+
+            // Action
+            await threadRepositoryPostgres.addThreadCommentReply(commentId, owner, newReply);
+
+            // Assert
+            const threadComments = await ThreadCommentRepliesTableTestHelper.findThreadCommentReplyById('reply-123');
+            expect(threadComments).toHaveLength(1);
+        })
+
+        it('should return added thread comment correctly', async () => {
+            // Arrange
+            const newReply = new NewThreadComment({
+                content: 'Komentar',
+            });
+            const commentId = "comment-riakgu";
+            const owner = "user-riakgu";
+
+            const fakeIdGenerator = () => '123'; // stub!
+            const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, fakeIdGenerator);
+
+            // Action
+            const addedReply = await threadRepositoryPostgres.addThreadCommentReply(commentId, owner, newReply);
+
+            // Assert
+            expect(addedReply).toStrictEqual({
+                id: 'reply-123',
+                content: 'Komentar',
+                owner: 'user-riakgu',
+            });
+        })
     })
-})
+});

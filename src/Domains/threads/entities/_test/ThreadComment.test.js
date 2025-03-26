@@ -1,4 +1,5 @@
 const ThreadComment = require("../ThreadComment");
+const ThreadCommentReply = require("../ThreadCommentReply");
 
 describe('ThreadComment entities', () => {
     it('should throw error when payload not contain needed property', () => {
@@ -6,6 +7,7 @@ describe('ThreadComment entities', () => {
         const payload = {
             id: 'comment-riakgu',
             username: "riakgu",
+            date: 'Thread date',
             content: 'Komentar',
         }
 
@@ -18,9 +20,10 @@ describe('ThreadComment entities', () => {
         const payload = {
             id: 'comment-riakgu',
             username: "riakgu",
-            date: ['Thread date'],
+            date: 'Thread date',
+            replies: {},
             content: 'Komentar',
-        };
+        }
 
         // Action & Assert
         expect(() => new ThreadComment(payload)).toThrowError('THREAD_COMMENT.NOT_MEET_DATA_TYPE_SPECIFICATION');
@@ -32,8 +35,11 @@ describe('ThreadComment entities', () => {
             id: 'comment-riakgu',
             username: "riakgu",
             date: 'Thread date',
+            replies: [
+                { id: 'comment-riakgu', content: 'Komentar', date: 'Date', username: "riakgu", }
+            ],
             content: 'Komentar',
-        };
+        }
 
         // Action
         const threadComment = new ThreadComment(payload);
@@ -44,5 +50,8 @@ describe('ThreadComment entities', () => {
         expect(threadComment.username).toEqual(payload.username);
         expect(threadComment.date).toEqual(payload.date);
         expect(threadComment.content).toEqual(payload.content);
+        expect(threadComment.replies).toEqual(payload.replies);
+        expect(threadComment.replies).toHaveLength(1);
+        expect(threadComment.replies[0]).toBeInstanceOf(ThreadCommentReply);
     })
 })

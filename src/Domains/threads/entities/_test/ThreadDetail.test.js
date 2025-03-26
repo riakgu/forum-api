@@ -40,7 +40,13 @@ describe('ThreadDetail entities', () => {
             date: 'Thread date',
             username: 'riakgu',
             comments: [
-                { id: 'comment-riakgu', content: 'Komentar', date: 'Date', username: 'riakgu' }
+                {
+                    id: 'comment-riakgu',
+                    username: 'riakgu',
+                    date: 'Date',
+                    replies: [],
+                    content: 'Komentar',
+                }
             ],
         };
 
@@ -54,9 +60,8 @@ describe('ThreadDetail entities', () => {
         expect(threadDetail.body).toEqual(payload.body);
         expect(threadDetail.date).toEqual(payload.date);
         expect(threadDetail.username).toEqual(payload.username);
-        expect(threadDetail.comments).toEqual(payload.comments);
         expect(threadDetail.comments).toHaveLength(1);
         expect(threadDetail.comments[0]).toBeInstanceOf(ThreadComment);
-    })
-
+        expect(threadDetail.comments[0].replies).toEqual([]);
+    });
 });

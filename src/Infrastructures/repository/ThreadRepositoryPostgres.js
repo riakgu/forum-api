@@ -134,6 +134,32 @@ class ThreadRepositoryPostgres extends ThreadRepository {
         }));
     }
 
+    async getRepliesByCommentId(commentId) {
+        const query = {
+            text: `
+                SELECT thread_comment_replies.id, users.username, thread_comment_replies.created_at AS date, 
+                    CASE 
+                       WHEN thread_comment_replies.is_deleted THEN '**balasan telah dihapus**' 
+                       ELSE thread_comment_replies.content
+                    END AS content
+                FROM thread_comment_replies
+                JOIN users ON thread_comment_replies.owner = users.id
+                WHERE thread_comment_replies.comment_id = $1
+                ORDER BY thread_comment_replies.created_at ASC
+            `,
+            values: [commentId],
+        };
+
+        const result = await this._pool.query(query);
+
+        return result.rows.map((reply) => ({
+            id: reply.id,
+            content: reply.content,
+            date: new Date(reply.date).toISOString(),
+            username: reply.username,
+        }));
+    }
+
     async addThreadCommentReply(commentId, owner, newReply) {
         const {content} = newReply;
         const id = `reply-${this._idGenerator()}`;

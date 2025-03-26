@@ -342,6 +342,90 @@ describe('ThreadRepositoryPostgres', () => {
         });
     });
 
+    describe('getRepliesByCommentId function', () => {
+        it('should return replies correctly when found', async () => {
+            // Arrange
+            const commentId = "comment-riakgu";
+
+            const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool);
+
+            // Action
+            const replies = await threadRepositoryPostgres.getRepliesByCommentId(commentId);
+
+            // Assert
+            expect(replies).toHaveLength(1);
+            expect(replies[0]).toStrictEqual({
+                id: 'reply-riakgu',
+                content: 'Balasan',
+                date: new Date(replies[0].date).toISOString(),
+                username: "riakgu",
+            });
+        });
+
+        it('should return deleted reply as "**balasan telah dihapus**"', async () => {
+            // Arrange
+            await ThreadCommentRepliesTableTestHelper.addThreadCommentReply({
+                id: 'reply-deleted',
+                commentId: 'comment-riakgu',
+                owner: 'user-riakgu',
+                content: 'Balasan',
+                isDeleted: true,
+            })
+
+            const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool);
+
+            // Action
+            const replies = await threadRepositoryPostgres.getRepliesByCommentId('comment-riakgu');
+
+            // Assert
+            expect(replies).toHaveLength(2);
+            expect(replies[1]).toStrictEqual({
+                id: 'reply-deleted',
+                content: '**balasan telah dihapus**',
+                date: new Date(replies[1].date).toISOString(),
+                username: 'riakgu',
+            });
+        });
+
+        it('should return replies correctly when is_deleted is false', async () => {
+            // Arrange
+            await ThreadCommentRepliesTableTestHelper.addThreadCommentReply({
+                id: 'reply-valid',
+                commentId: 'comment-riakgu',
+                owner: 'user-riakgu',
+                content: 'Balasan',
+                isDeleted: false,
+            })
+
+            const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool);
+
+            // Action
+            const replies = await threadRepositoryPostgres.getRepliesByCommentId('comment-riakgu');
+
+            // Assert
+            expect(replies).toHaveLength(2);
+            expect(replies[1]).toStrictEqual({
+                id: 'reply-valid',
+                content: 'Balasan',
+                date: new Date(replies[1].date).toISOString(),
+                username: 'riakgu',
+            });
+        });
+
+        it('should return empty array when no replies found', async () => {
+            // Arrange
+            const commentId = "comment-kosong";
+            const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool);
+
+            // Action
+            const comments = await threadRepositoryPostgres.getRepliesByCommentId(commentId);
+
+            // Assert
+            expect(comments).toHaveLength(0);
+            expect(comments).toStrictEqual([]);
+        });
+    })
+
     describe('addThreadCommentReply function', () => {
         it('should add a new thread comment reply to the database', async () => {
             // Arrange

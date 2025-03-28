@@ -50,6 +50,18 @@ class ThreadRepository {
     async getRepliesByCommentId(commentId) {
         throw new Error('THREAD_REPOSITORY.METHOD_NOT_IMPLEMENTED');
     }
+
+    async addCommentLike(commentId, userId) {
+        throw new Error('THREAD_REPOSITORY.METHOD_NOT_IMPLEMENTED');
+    }
+
+    async deleteCommentLike(commentId, userId) {
+        throw new Error('THREAD_REPOSITORY.METHOD_NOT_IMPLEMENTED');
+    }
+
+    async isCommentLiked(commentId, userId) {
+        throw new Error('THREAD_REPOSITORY.METHOD_NOT_IMPLEMENTED');
+    }
 }
 
 module.exports = ThreadRepository;

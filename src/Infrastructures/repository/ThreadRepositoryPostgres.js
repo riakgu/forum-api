@@ -208,6 +208,37 @@ class ThreadRepositoryPostgres extends ThreadRepository {
             throw new NotFoundError('balasan komentar tidak ditemukan atau telah dihapus');
         }
     }
+
+    async addCommentLike(commentId, userId) {
+        const id = `like-${this._idGenerator()}`;
+
+        const query = {
+            text: 'INSERT INTO thread_comment_likes (id, comment_id, owner) VALUES ($1, $2, $3) RETURNING id',
+            values: [id, commentId, userId],
+        };
+
+        await this._pool.query(query);
+    }
+
+    async deleteCommentLike(commentId, userId) {
+        const query = {
+            text: 'DELETE FROM thread_comment_likes WHERE comment_id = $1 AND owner = $2',
+            values: [commentId, userId],
+        };
+
+        await this._pool.query(query);
+    }
+
+    async isCommentLiked(commentId, userId) {
+        const query = {
+            text: 'SELECT id FROM thread_comment_likes WHERE comment_id = $1 AND owner = $2',
+            values: [commentId, userId],
+        };
+
+        const result = await this._pool.query(query);
+
+        return result.rowCount > 0;
+    }
 }
 
 module.exports = ThreadRepositoryPostgres;

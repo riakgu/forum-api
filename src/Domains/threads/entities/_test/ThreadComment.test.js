@@ -23,6 +23,7 @@ describe('ThreadComment entities', () => {
             date: 'Thread date',
             replies: {},
             content: 'Komentar',
+            likeCount: "90",
         }
 
         // Action & Assert
@@ -39,6 +40,7 @@ describe('ThreadComment entities', () => {
                 { id: 'comment-riakgu', content: 'Komentar', date: 'Date', username: "riakgu", }
             ],
             content: 'Komentar',
+            likeCount: 5
         }
 
         // Action
@@ -50,6 +52,7 @@ describe('ThreadComment entities', () => {
         expect(threadComment.username).toEqual(payload.username);
         expect(threadComment.date).toEqual(payload.date);
         expect(threadComment.content).toEqual(payload.content);
+        expect(threadComment.likeCount).toEqual(payload.likeCount);
         expect(threadComment.replies).toEqual(payload.replies);
         expect(threadComment.replies).toHaveLength(1);
         expect(threadComment.replies[0]).toBeInstanceOf(ThreadCommentReply);

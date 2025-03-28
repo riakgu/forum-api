@@ -46,6 +46,7 @@ describe('ThreadDetail entities', () => {
                     date: 'Date',
                     replies: [],
                     content: 'Komentar',
+                    likeCount: 5,
                 }
             ],
         };

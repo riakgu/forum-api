@@ -239,6 +239,17 @@ class ThreadRepositoryPostgres extends ThreadRepository {
 
         return result.rowCount > 0;
     }
+
+    async getCommentLikes(commentId) {
+        const query = {
+            text: 'SELECT id FROM thread_comment_likes WHERE comment_id = $1',
+            values: [commentId],
+        };
+
+        const result = await this._pool.query(query);
+
+        return result.rowCount;
+    }
 }
 
 module.exports = ThreadRepositoryPostgres;

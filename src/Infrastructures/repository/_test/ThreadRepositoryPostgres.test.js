@@ -8,6 +8,7 @@ const NewThreadComment = require("../../../Domains/threads/entities/NewThreadCom
 const ThreadCommentsTableTestHelper = require("../../../../tests/ThreadCommentsTableTestHelper");
 const AuthorizationError = require("../../../Commons/exceptions/AuthorizationError");
 const ThreadCommentRepliesTableTestHelper = require("../../../../tests/ThreadCommentRepliesTableTestHelper");
+const ThreadCommentLikesTableTestHelper = require("../../../../tests/ThreadCommentLikesTableTestHelper");
 
 describe('ThreadRepositoryPostgres', () => {
     beforeEach(async () => {
@@ -535,4 +536,72 @@ describe('ThreadRepositoryPostgres', () => {
                 .rejects.toThrow(NotFoundError);
         });
     });
+
+    describe('addCommentLike function', () => {
+        it('should add a comment like to the database', async () => {
+            // Arrange
+            const commentId = "comment-riakgu";
+            const owner = "user-riakgu";
+
+            const fakeIdGenerator = () => '123'; // stub!
+            const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool, fakeIdGenerator);
+
+            // Action
+            await threadRepositoryPostgres.addCommentLike(commentId, owner);
+
+            // Assert
+            const likes = await ThreadCommentLikesTableTestHelper.findThreadCommentLikeById('like-123');
+            expect(likes).toHaveLength(1);
+        })
+    });
+
+    describe('deleteCommentLike function', () => {
+        it('should delete a comment like to the database', async () => {
+            // Arrange
+            await ThreadCommentLikesTableTestHelper.addThreadCommentLike({
+                id: 'like-riakgu',
+                commentId: 'comment-riakgu',
+                owner: 'user-riakgu',
+            })
+            const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool);
+
+            // Action
+            await threadRepositoryPostgres.deleteCommentLike('comment-riakgu', 'user-riakgu');
+
+            // Assert
+            const likes = await ThreadCommentsTableTestHelper.findThreadCommentById('like-riakgu');
+            expect(likes).toHaveLength(0);
+        })
+    })
+
+    describe('isCommentLiked function', () => {
+        it('should return true if comment liked by user', async () => {
+            // Arrange
+            await ThreadCommentLikesTableTestHelper.addThreadCommentLike({
+                id: 'like-riakgu',
+                commentId: 'comment-riakgu',
+                owner: 'user-riakgu',
+            })
+
+            const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool);
+
+            // Action & Assert
+            await expect(threadRepositoryPostgres.isCommentLiked('comment-riakgu', 'user-riakgu'))
+                .resolves.toBe(true);
+        });
+
+        it('should return false if comment not liked by user', async () => {
+            // Arrange
+            const commentId = "comment-riakgu";
+            const userId = "user-riakgu";
+
+            const threadRepositoryPostgres = new ThreadRepositoryPostgres(pool);
+
+            // Action & Assert
+            await expect(threadRepositoryPostgres.isCommentLiked(commentId, userId))
+                .resolves.toBe(false);
+        })
+    })
+
+
 });

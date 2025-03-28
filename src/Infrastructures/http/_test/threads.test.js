@@ -584,4 +584,49 @@ describe('/threads endpoint', () => {
             expect(responseJson.message).toEqual('balasan komentar tidak ditemukan atau telah dihapus');
         });
     })
+
+    describe('when PUT /threads/{threadId}/comments/{commentId}/likes', () => {
+        it('should response 200 if comment valid', async () => {
+            // Arrange
+            const server = await createServer(container);
+            const threadId = 'thread-riakgu';
+            const commentId = 'comment-riakgu';
+
+            // Action
+            const response = await server.inject({
+                method: 'PUT',
+                url: `/threads/${threadId}/comments/${commentId}/likes`,
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            });
+
+            // Assert
+            const responseJson = JSON.parse(response.payload);
+            expect(response.statusCode).toEqual(200);
+            expect(responseJson.status).toEqual('success');
+        });
+
+        it('should response 404 if comment not registered in database', async () => {
+            // Arrange
+            const server = await createServer(container);
+            const threadId = 'thread-123';
+            const commentId = 'comment-riakgu';
+
+            // Action
+            const response = await server.inject({
+                method: 'PUT',
+                url: `/threads/${threadId}/comments/${commentId}/likes`,
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            });
+
+            // Assert
+            const responseJson = JSON.parse(response.payload);
+            expect(response.statusCode).toEqual(404);
+            expect(responseJson.status).toEqual('fail');
+            expect(responseJson.message).toEqual('komentar tidak ditemukan atau telah dihapus');
+        });
+    })
 });

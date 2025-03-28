@@ -15,7 +15,7 @@ class ThreadComment {
     _verifyPayload(payload) {
         const { id, username, date, replies, content, likeCount } = payload;
 
-        if (!id || !username || !date || !replies || typeof content === "undefined" || !likeCount) {
+        if (!id || !username || !date || !replies || typeof content === "undefined" || typeof likeCount === "undefined") {
             throw new Error('THREAD_COMMENT.NOT_CONTAIN_NEEDED_PROPERTY');
         }
 

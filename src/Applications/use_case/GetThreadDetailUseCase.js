@@ -11,10 +11,12 @@ class GetThreadDetailUseCase {
         const comments = await this._threadRepository.getCommentsByThreadId(threadId);
 
         const commentsWithReplies = await Promise.all(comments.map(async (comment) => {
+            const likeCount = await this._threadRepository.getCommentLikes(comment.id);
             const replies = await this._threadRepository.getRepliesByCommentId(comment.id);
             return new ThreadComment({
                 ...comment,
                 replies,
+                likeCount,
             });
         }));
 
